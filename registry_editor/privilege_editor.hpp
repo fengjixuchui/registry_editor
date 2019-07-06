@@ -8,7 +8,7 @@ namespace privilege {
 	bool set_privilege( ) {
 		LUID luid{ };
 
-		if ( !LookupPrivilegeValueA( NULL, SE_TAKE_OWNERSHIP_NAME, &luid ) )
+		if ( !LookupPrivilegeValueA( 0, SE_TAKE_OWNERSHIP_NAME, &luid ) )
 			return false;
 
 		HANDLE h_token = INVALID_HANDLE_VALUE;
@@ -33,7 +33,7 @@ namespace privilege {
 		PSID sid_everyone = nullptr;
 		SID_IDENTIFIER_AUTHORITY sid_world = SECURITY_WORLD_SID_AUTHORITY;
 
-		if ( !AllocateAndInitializeSid( &sid_world, 1, SECURITY_WORLD_RID, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &sid_everyone ) )
+		if ( !AllocateAndInitializeSid( &sid_world, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &sid_everyone ) )
 			return false;
 
 		EXPLICIT_ACCESS explicity{ };
@@ -54,7 +54,7 @@ namespace privilege {
 
 		privilege::set_privilege( );
 
-		if ( SetNamedSecurityInfoA( file_path, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, acl_entry, NULL ) != ERROR_SUCCESS )
+		if ( SetNamedSecurityInfoA( file_path, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, 0, 0, acl_entry, 0 ) != ERROR_SUCCESS )
 			return false;
 
 		return true;
