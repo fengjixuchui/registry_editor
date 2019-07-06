@@ -18,7 +18,6 @@ raii::hkey registry_hkey( const std::string_view& key ) {
 
 	if ( status != ERROR_SUCCESS ) {
 		out( "[-] failed to open handle to %s\n", key.data( ) );
-		std::this_thread::sleep_for( std::chrono::seconds( 7 ) );
 		return nullptr;
 	}
 
@@ -58,20 +57,17 @@ int main( ) {
 
 	auto control_key = registry_hkey( "System\\CurrentControlSet\\Control" );
 	{
-		std::array sub_keys{ "SystemInformation", "ComputerHardwareId" };
-		spoof_key( control_key.get( ), sub_keys, 1 );
+		spoof_key( control_key.get( ), std::array{ "SystemInformation", "ComputerHardwareId" }, 1 );
 	}
 
 	auto bios_key = registry_hkey( "Hardware\\Description\\System\\BIOS" );
 	{
-		std::array sub_keys{ "BaseBoardManufacturer", "BaseBoardProduct", "BIOSVendor", "BIOSReleaseDate", "SystemManufacturer", "SystemProductName" };
-		spoof_key( bios_key.get( ), sub_keys, 1 );
+		spoof_key( bios_key.get( ), std::array{ "BaseBoardManufacturer", "BaseBoardProduct", "BIOSVendor", "BIOSReleaseDate", "SystemManufacturer", "SystemProductName" }, 1 );
 	}
 
 	auto scsi_key = registry_hkey( "Hardware\\DeviceMap\\Scsi\\Scsi Port 0\\Scsi Bus 0\\Target Id 0\\Logical Unit Id 0" );
 	{
-		std::array sub_keys{ "Identifier", "SerialNumber" };
-		spoof_key( scsi_key.get( ), sub_keys, 1 );
+		spoof_key( scsi_key.get( ), std::array{ "Identifier", "SerialNumber" }, 1 );
 	}
 
 	auto cpu_key = registry_hkey( "Hardware\\Description\\System\\CentralProcessor\\0" );
@@ -86,8 +82,7 @@ int main( ) {
 
 	auto nt_key = registry_hkey( "Software\\Microsoft\\Windows NT\\CurrentVersion" );
 	{
-		std::array sub_keys{ "InstallDate", "InstallTime", "BuildGUID", "ProductID" };
-		spoof_key( nt_key.get( ), sub_keys, 2 );
+		spoof_key( nt_key.get( ), std::array{ "InstallDate", "InstallTime", "BuildGUID", "ProductID" };, 2 );
 	}
 	
 	HKEY raw_hkey = nullptr;
