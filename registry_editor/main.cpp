@@ -38,12 +38,12 @@ int main( ) {
 			randomized_string.reserve( string_length );
 			std::generate_n( std::back_inserter( randomized_string ), string_length, [ & ] ( ) {
 				thread_local std::mt19937_64 mersenne_generator( std::random_device{}( ) );
-				thread_local std::uniform_int_distribution<> distribution( 97, 122 );
+				std::uniform_int_distribution<> distribution( 97, 122 );
 				return static_cast< unsigned char >( distribution( mersenne_generator ) );
 			} );
 		} else if ( data_type == 2 ) {
 			thread_local std::mt19937_64 mersenne_generator( std::random_device{}( ) );
-			thread_local std::uniform_int_distribution<DWORD> distribution( 0, MAXUINT32 );
+			std::uniform_int_distribution<DWORD> distribution( 0, MAXUINT32 );
 			randomized_dword = distribution( mersenne_generator );
 		}
 
