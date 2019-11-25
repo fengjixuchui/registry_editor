@@ -26,31 +26,36 @@ raii::hkey registry_hkey( const std::string_view key ) {
 int main( ) {
 	out( "[+] registry spoofer by paracord initiated\n" );
 
-	static constexpr std::size_t string_length = 16;
+	constexpr auto string_length = 16ull;
 	const auto start_time = std::chrono::steady_clock::now( ).time_since_epoch( );
 
-	auto spoof_key = [ ]( HKEY current_key, auto sub_keys, std::uint8_t data_type ) {
-		DWORD randomized_dword = 0u;
+	auto spoof_key = [ ]( HKEY current_key, auto sub_keys, bool is_string ) 
+	{
+		auto randomized_dword = 0ul;
 		std::string randomized_string;
 
-		if ( data_type == 1 ) {
+		thread_local std::mt19937_64 mersenne_generator( std::random_device{}( ) );
+		
+		if ( is_string )
+		{
 			randomized_string.reserve( string_length );
 			std::generate_n( std::back_inserter( randomized_string ), string_length, [ & ] ( ) {
-				thread_local std::mt19937_64 mersenne_generator( std::random_device{}( ) );
 				std::uniform_int_distribution<> distribution( 97, 122 );
 				return static_cast< unsigned char >( distribution( mersenne_generator ) );
 			} );
-		} else if ( data_type == 2 ) {
-			thread_local std::mt19937_64 mersenne_generator( std::random_device{}( ) );
+		} 
+		else
+		{
 			std::uniform_int_distribution<DWORD> distribution( 0, MAXUINT32 );
 			randomized_dword = distribution( mersenne_generator );
 		}
 
 		auto set_status = ERROR_SUCCESS;
 
-		for ( const auto current : sub_keys ) {
-			( data_type == 1 ) ? set_status = RegSetValueExA( current_key, current, 0, REG_SZ, ( std::uint8_t* )randomized_string.c_str( ), string_length ) : set_status = RegSetValueExA( current_key, current, 0, REG_DWORD, ( std::uint8_t* )&randomized_dword, sizeof( DWORD ) );
-			( set_status == ERROR_SUCCESS ) ? ( ( data_type == 1 ) ? out( "[+] set %s to: %s\n", current, randomized_string.c_str( ) ) : out( "[+] set %s to: %i\n", current, randomized_dword ) ) : out( "[-] failed to set %s\n", current );
+		for ( const auto& current : sub_keys ) 
+		{
+			is_string ? set_status = RegSetValueExA( current_key, current, 0, REG_SZ, ( std::uint8_t* )randomized_string.c_str( ), string_length ) : set_status = RegSetValueExA( current_key, current, 0, REG_DWORD, ( std::uint8_t* )&randomized_dword, sizeof( DWORD ) );
+			( set_status == ERROR_SUCCESS ) ? ( is_string ? out( "[+] set %s to: %s\n", current, randomized_string.c_str( ) ) : out( "[+] set %s to: %i\n", current, randomized_dword ) ) : out( "[-] failed to set %s\n", current );
 		}
 	};
 
