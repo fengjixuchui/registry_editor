@@ -9,12 +9,11 @@
 #include "privilege_editor.hpp"
 
 #define out( text, ... ) std::printf( text, ##__VA_ARGS__ )
-#define EAC_FINGERPRINT "C:\\Windows\\System32\\restore\\MachineGuid.txt"
 #pragma warning( disable : 4312 )
 
-raii::hkey registry_hkey( const std::string_view& key ) {
+raii::hkey registry_hkey( const std::string_view key ) {
 	HKEY output = nullptr;
-	LSTATUS status = RegOpenKeyExA( HKEY_LOCAL_MACHINE, key.data( ), 0, KEY_ALL_ACCESS, &output );
+	const LSTATUS status = RegOpenKeyExA( HKEY_LOCAL_MACHINE, key.data( ), 0, KEY_ALL_ACCESS, &output );
 
 	if ( status != ERROR_SUCCESS ) {
 		out( "[-] failed to open handle to %s\n", key.data( ) );
@@ -60,19 +59,9 @@ int main( ) {
 		spoof_key( control_key.get( ), std::array{ "SystemInformation", "ComputerHardwareId" }, 1 );
 	}
 
-	auto bios_key = registry_hkey( "Hardware\\Description\\System\\BIOS" );
-	{
-		spoof_key( bios_key.get( ), std::array{ "BaseBoardManufacturer", "BaseBoardProduct", "BIOSVendor", "BIOSReleaseDate", "SystemManufacturer", "SystemProductName" }, 1 );
-	}
-
 	auto scsi_key = registry_hkey( "Hardware\\DeviceMap\\Scsi\\Scsi Port 0\\Scsi Bus 0\\Target Id 0\\Logical Unit Id 0" );
 	{
 		spoof_key( scsi_key.get( ), std::array{ "Identifier", "SerialNumber" }, 1 );
-	}
-
-	auto cpu_key = registry_hkey( "Hardware\\Description\\System\\CentralProcessor\\0" );
-	{
-		spoof_key( scsi_key.get( ), std::array{ "ProcessorNameString" }, 1 );
 	}
 
 	auto desc_key = registry_hkey( "System\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000" );
@@ -82,7 +71,7 @@ int main( ) {
 
 	auto nt_key = registry_hkey( "Software\\Microsoft\\Windows NT\\CurrentVersion" );
 	{
-		spoof_key( nt_key.get( ), std::array{ "InstallDate", "InstallTime", "BuildGUID", "ProductID" };, 2 );
+		spoof_key( nt_key.get( ), std::array{ "InstallTime", "BuildGUID", "ProductID" }, 2 );
 	}
 	
 	HKEY raw_hkey = nullptr;
@@ -107,11 +96,19 @@ int main( ) {
 			TerminateProcess( wmi_handle.get( ), EXIT_SUCCESS );
 	}
 
-	if ( std::filesystem::exists( EAC_FINGERPRINT ) ) 
+	constexpr auto machine_guid = "C:\\Windows\\System32\\restore\\MachineGuid.txt";
+	
+	if ( std::filesystem::exists( machine_guid ) )
 	{
-		privilege::take_ownership( const_cast< char* >( EAC_FINGERPRINT ) );
-		std::filesystem::remove( EAC_FINGERPRINT );
-		out( "[+] deleted MachineGUID.txt\n" );
+		privilege::take_ownership( machine_guid );
+
+		auto file_attributes = GetFileAttributesA( machine_guid );
+		file_attributes &= FILE_ATTRIBUTE_READONLY;
+		
+		SetFileAttributesA( machine_guid, file_attributes );
+		std::remove( machine_guid );
+		
+		out( "[+] deleted %s\n", machine_guid );
 	}
 
 	auto elapsed_time = std::chrono::duration_cast< std::chrono::milliseconds >( std::chrono::steady_clock::now( ).time_since_epoch( ) - start_time ).count( );
