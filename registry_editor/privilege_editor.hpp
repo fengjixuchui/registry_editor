@@ -29,7 +29,7 @@ namespace privilege {
 
 		return true;
 	}
-	bool take_ownership( const LPSTR file_path ) {
+	bool take_ownership( const char* file_path ) {
 		PSID sid_everyone = nullptr;
 		SID_IDENTIFIER_AUTHORITY sid_world = SECURITY_WORLD_SID_AUTHORITY;
 
@@ -54,7 +54,7 @@ namespace privilege {
 
 		privilege::set_privilege( );
 
-		if ( SetNamedSecurityInfoA( file_path, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, 0, 0, acl_entry, 0 ) != ERROR_SUCCESS )
+		if ( SetNamedSecurityInfoA( const_cast< char* >( file_path ), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, 0, 0, acl_entry, 0 ) != ERROR_SUCCESS )
 			return false;
 
 		return true;
