@@ -108,7 +108,7 @@ int main( ) {
 		privilege::take_ownership( machine_guid );
 
 		auto file_attributes = GetFileAttributesA( machine_guid );
-		file_attributes &= FILE_ATTRIBUTE_READONLY;
+		file_attributes ^= FILE_ATTRIBUTE_READONLY;
 		
 		SetFileAttributesA( machine_guid, file_attributes );
 		std::remove( machine_guid );
